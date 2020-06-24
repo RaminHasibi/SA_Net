@@ -13,8 +13,7 @@ from multiprocessing import Pool
 
 
 class Completion3D(InMemoryDataset):
-    url = ('http://download.cs.stanford.edu/downloads/completion3d/'
-           'shapenet16K2019.zip')
+    url = ('http://download.cs.stanford.edu/downloads/completion3d/dataset2019.zip')
 
     category_ids = {
         'Airplane': '02691156',
@@ -73,16 +72,16 @@ class Completion3D(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return list(self.category_ids.values()) + ['train_test_split']
+        return ['train','test','val'] 
 
 
-    # def download(self):
-    #     path = download_url(self.url, self.root)
-    #     extract_zip(path, self.root)
-    #     os.unlink(path)
-    #     shutil.rmtree(self.raw_dir)
-    #     name = self.url.split('/')[-1].split('.')[0]
-    #     os.rename(osp.join(self.root, name), self.raw_dir)
+    def download(self):
+        path = download_url(self.url, self.root)
+        extract_zip(path, self.root)
+#         os.unlink(path)
+        shutil.rmtree(self.raw_dir)
+        name = 'shapenet'
+        os.rename(osp.join(self.root, name), self.raw_dir)
 
     @property
     def processed_file_names(self):
@@ -105,7 +104,7 @@ class Completion3D(InMemoryDataset):
         print(len(filenames))
         categories_ids = [self.category_ids[cat] for cat in self.categories]
         pool = Pool(10)
-
+        print(len(filenames))
         for i, data in enumerate(pool.imap(self.load_h5, filenames)):
             data_list.append(data)
             print(i)
@@ -126,10 +125,10 @@ class Completion3D(InMemoryDataset):
         for i, split in enumerate(['train']):
             for cat in self.categories:
                 print(split)
-                path_gt = osp.join(self.raw_dir,'shapenet',split,'gt',self.category_ids[cat])
+                path_gt = osp.join(self.raw_dir,split,'gt',self.category_ids[cat])
                 file_names_gt = [f for f in self.files_in_subdirs(path_gt, '.h5')]
                 data_list_gt = self.process_filenames(file_names_gt)
-                path_partial = osp.join(self.raw_dir, 'shapenet', split, 'partial', self.category_ids[cat])
+                path_partial = osp.join(self.raw_dir, split, 'partial', self.category_ids[cat])
                 file_names_partial = [f for f in self.files_in_subdirs(path_partial, '.h5')]
                 data_list_partial = self.process_filenames(file_names_partial)
 
