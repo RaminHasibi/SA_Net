@@ -44,6 +44,23 @@ def MLP(channels, batch_norm=True):
         for i in range(1, len(channels))
     ])
 
+
+class Attention(torch.nn.Module):
+    def __init__(self, NN_h, NN_l, NN_g):
+        super(Attention, self).__init__()
+        self.M_h = NN_h
+        self.M_l = NN_l
+        self.M_g = NN_g
+    def forward(self, p, r):
+        attn_weights = F.softmax(
+            torch.bmm(self.M_h(p).unsqueeze(0), self.M_l(r).unsqueeze(0).transpose(1,2)), dim=1)
+        return p + torch.bmm(attn_weights,self.M_g(p))
+
+
+class UpModule(torch.nn.Module):
+    def __init__(self):
+        super(UpModule, self).__init__()
+
 class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
