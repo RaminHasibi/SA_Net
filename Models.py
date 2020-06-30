@@ -5,7 +5,7 @@ import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool
 from chamfer_distance import ChamferDistance
-from Data import ShapeNet_2048
+from Compeletion3D import Completion3D
 
 
 class SAModule(torch.nn.Module):
