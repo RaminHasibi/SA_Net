@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import DataLoader
 from chamfer_distance import ChamferDistance
-from Completion3D import Completion3D
+from Compeletion3D import Completion3D
 
 
 

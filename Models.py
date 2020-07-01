@@ -65,20 +65,21 @@ class FoldingBlock(torch.nn.Module):
         self.in_shape = input
         self.out_shape = output
         self.self_attn = Attention(*attentions)
-        self.M_up = NN_up
-        self.M_down = NN_down
+        self.M_up = MLP(*NN_up)
+        self.M_down = MLP(*NN_down)
         self.self_attn2 = Attention(*attentions)
-        self.M_up2 = NN_up
-        self.M_down2 = NN_down
-    def Up_module(self,p,k):
+        self.M_up2 = MLP(*NN_up)
+        self.M_down2 = MLP(*NN_down)
+    def Up_module(self,p, k):
 
         p = p.repeat(1, self.out_shape/self.in_shape, 1)
-        meshgrid = [[-0.3, 0.3, k], [-0.3, 0.3, k]]
-        x = np.linspace(meshgrid[0])
-        y = np.linspace(meshgrid[1])
+        meshgrid = [[-0.3, 0.3, 45], [-0.3, 0.3, 45]]
+        x = np.linspace(*meshgrid[0])
+        y = np.linspace(*meshgrid[1])
         points = torch.tensor(np.array(list(itertools.product(x, y))))
 
-        p_2d = torch.cat([p, points], -1)
+        indeces = torch.linspace(0, 45, k)
+        p_2d = torch.cat([p, points[indeces,indeces]], -1)
         p_2d = self.M_up(p_2d)
         p = torch.cat([p, p_2d], -1)
         return self.self_attn(p,p)
@@ -86,10 +87,10 @@ class FoldingBlock(torch.nn.Module):
     def Down_module(self,p):
         return self.M_down(p.view(-1, self.in_shape, -1))
 
-    def forward(self,p):
-        p1 = self.Up_module(p,self.k)
+    def forward(self,p, k):
+        p1 = self.Up_module(p, k)
         p2 = self.Down_module(p1)
-        p2 = self.Up_module(p2, self.k)
+        p2 = self.Up_module(p2, k)
         return p1 + p2
 
 
@@ -99,8 +100,16 @@ class Net(torch.nn.Module):
 
         self.sa1_module = SAModule(0.2, 0.2, MLP([3 + 3, 64, 64, 128]))
         self.sa2_module = SAModule(0.5, 0.4, MLP([128 + 3, 128, 128, 256]))
-        self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024])) 
-        
+        self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 512]))
+
+        self.skip_attn1 = Attention(MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512]))
+        self.skip_attn2 = Attention(MLP([512 + 3, 256]), MLP([256, 256]), MLP([512 + 3, 256]))
+
+        self.folding1 = FoldingBlock(64, 256, [MLP[512 + 3, 512], MLP([256,512], MLP[512 + 3, 512])] , [256, 64], [64 , 64])
+        self.folding2 = FoldingBlock(256, 512, [MLP[512 + 3, 512], MLP([256,512], MLP[512 + 3, 512])] , [256, 64], [64 , 64])
+        self.folding3 = FoldingBlock(512, 2048, [MLP[512 + 3, 512], MLP([256,512], MLP[512 + 3, 512])] , [256, 64], [64 , 64])
+
+        self.meshgrid = [[-0.3, 0.3, 45], [-0.3, 0.3, 45]]
 
     def Encode(self,data):
         sa1_out = self.sa1_module(data.pos, data.pos, data.batch)
@@ -110,11 +119,22 @@ class Net(torch.nn.Module):
 
 
     def Decode(self,encoded):
+        x = np.linspace(*self.meshgrid[0])
+        y = np.linspace(*self.meshgrid[1])
+        points = torch.tensor(np.array(list(itertools.product(x, y))))
+        indeces = torch.linspace(0, 45, 64)
+        out = torch.cat((encoded[3][0],points[indeces,indeces]),1)
+        out = self.skip_attn1(out,encoded[1][0])
+        out = self.folding1(out,256)
+        out = self.skip_attn2(out,encoded[0][0])
+        out = self.folding3(out,512)
 
+        return out
     def forward(self, data):
 
         encoded = self.Encode(data)
 
+        decoded = self.Decode(encoded)
 
 
-        return x
+        return decoded, encoded
