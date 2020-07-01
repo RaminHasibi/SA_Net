@@ -94,7 +94,7 @@ class Completion3D(InMemoryDataset):
     def load_h5(self, path):
         with h5py.File(path, 'r') as f:
             data_key = list(f.keys())[0]
-            data = torch.tensor(f[data_key])
+            data = torch.tensor(f[data_key],dtype=torch.float32)
             return data
 
 

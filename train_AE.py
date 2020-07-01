@@ -38,7 +38,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     print(model)
     print('Training started:')
-    criterion = chamfer_loss()
+    criterion = chamfer_loss
     for epoch in range(1, 401):
         loss = train()
         print('Epoch {:03d}, Loss: {:.4f}'.format(

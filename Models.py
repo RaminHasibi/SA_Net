@@ -45,9 +45,9 @@ def MLP(channels, batch_norm=True):
 class Attention(torch.nn.Module):
     def __init__(self, NN_h, NN_l, NN_g):
         super(Attention, self).__init__()
-        self.M_h = NN_h
-        self.M_l = NN_l
-        self.M_g = NN_g
+        self.M_h = MLP([NN_h])
+        self.M_l = MLP([NN_l])
+        self.M_g = MLP([NN_g])
     def forward(self, p, r):
         attn_weights = F.softmax(
             torch.bmm(self.M_h(p).unsqueeze(0), self.M_l(r).unsqueeze(0).transpose(1,2)), dim=1)
@@ -61,11 +61,11 @@ class FoldingBlock(torch.nn.Module):
         self.in_shape = input
         self.out_shape = output
         self.self_attn = Attention(*attentions)
-        self.M_up = MLP(*NN_up)
-        self.M_down = MLP(*NN_down)
+        self.M_up = MLP(NN_up)
+        self.M_down = MLP(NN_down)
         self.self_attn2 = Attention(*attentions)
-        self.M_up2 = MLP(*NN_up)
-        self.M_down2 = MLP(*NN_down)
+        self.M_up2 = MLP(NN_up)
+        self.M_down2 = MLP(NN_down)
     def Up_module(self,p, k):
 
         p = p.repeat(1, self.out_shape/self.in_shape, 1)
@@ -101,11 +101,11 @@ class SA_Net(torch.nn.Module):
         self.skip_attn1 = Attention(MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512]))
         self.skip_attn2 = Attention(MLP([512 + 3, 256]), MLP([256, 256]), MLP([512 + 3, 256]))
 
-        self.folding1 = FoldingBlock(64, 256, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+        self.folding1 = FoldingBlock(64, 256, [[512 + 3, 512], [256, 512], [512 + 3, 512]]
                                      , [256, 64], [64, 64])
-        self.folding2 = FoldingBlock(256, 512, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+        self.folding2 = FoldingBlock(256, 512, [[512 + 3, 512], [256, 512], [512 + 3, 512]]
                                      , [256, 64], [64, 64])
-        self.folding3 = FoldingBlock(512, 2048, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+        self.folding3 = FoldingBlock(512, 2048, [[512 + 3, 512], [256, 512], [512 + 3, 512]]
                                      , [256, 64], [64, 64])
 
         self.meshgrid = [[-0.3, 0.3, 45], [-0.3, 0.3, 45]]
