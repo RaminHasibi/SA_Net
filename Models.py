@@ -101,9 +101,12 @@ class SA_Net(torch.nn.Module):
         self.skip_attn1 = Attention(MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512]))
         self.skip_attn2 = Attention(MLP([512 + 3, 256]), MLP([256, 256]), MLP([512 + 3, 256]))
 
-        self.folding1 = FoldingBlock(64, 256, [MLP([512 + 3, 512]), MLP([256,512]), MLP([512 + 3, 512])], [256, 64], [64, 64])
-        self.folding2 = FoldingBlock(256, 512, [MLP([512 + 3, 512]), MLP([256,512]), MLP([512 + 3, 512])], [256, 64], [64, 64])
-        self.folding3 = FoldingBlock(512, 2048, [MLP[512 + 3, 512], MLP([256,512], MLP([512 + 3, 512]))], [256, 64], [64, 64])
+        self.folding1 = FoldingBlock(64, 256, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+                                     , [256, 64], [64, 64])
+        self.folding2 = FoldingBlock(256, 512, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+                                     , [256, 64], [64, 64])
+        self.folding3 = FoldingBlock(512, 2048, [MLP([512 + 3, 512]), MLP([256, 512]), MLP([512 + 3, 512])]
+                                     , [256, 64], [64, 64])
 
         self.meshgrid = [[-0.3, 0.3, 45], [-0.3, 0.3, 45]]
 
