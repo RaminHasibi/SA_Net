@@ -6,7 +6,8 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool
 from chamfer_distance import ChamferDistance
 from Compeletion3D import Completion3D
-
+import numpy as np
+import itertools
 
 class SAModule(torch.nn.Module):
     def __init__(self, ratio, r, nn):
@@ -57,34 +58,63 @@ class Attention(torch.nn.Module):
         return p + torch.bmm(attn_weights,self.M_g(p))
 
 
-class UpModule(torch.nn.Module):
-    def __init__(self):
-        super(UpModule, self).__init__()
+class FoldingBlock(torch.nn.Module):
+    def __init__(self, input, output,attentions, NN_up, NN_down):
+
+        super(FoldingBlock, self).__init__()
+        self.in_shape = input
+        self.out_shape = output
+        self.self_attn = Attention(*attentions)
+        self.M_up = NN_up
+        self.M_down = NN_down
+        self.self_attn2 = Attention(*attentions)
+        self.M_up2 = NN_up
+        self.M_down2 = NN_down
+    def Up_module(self,p,k):
+
+        p = p.repeat(1, self.out_shape/self.in_shape, 1)
+        meshgrid = [[-0.3, 0.3, k], [-0.3, 0.3, k]]
+        x = np.linspace(meshgrid[0])
+        y = np.linspace(meshgrid[1])
+        points = torch.tensor(np.array(list(itertools.product(x, y))))
+
+        p_2d = torch.cat([p, points], -1)
+        p_2d = self.M_up(p_2d)
+        p = torch.cat([p, p_2d], -1)
+        return self.self_attn(p,p)
+
+    def Down_module(self,p):
+        return self.M_down(p.view(-1, self.in_shape, -1))
+
+    def forward(self,p):
+        p1 = self.Up_module(p,self.k)
+        p2 = self.Down_module(p1)
+        p2 = self.Up_module(p2, self.k)
+        return p1 + p2
+
 
 class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
 
         self.sa1_module = SAModule(0.2, 0.2, MLP([3 + 3, 64, 64, 128]))
-        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
+        self.sa2_module = SAModule(0.5, 0.4, MLP([128 + 3, 128, 128, 256]))
         self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024])) 
         
-        self.lin1 = Lin(1024, 1024)
-        self.lin2 = Lin(1024, 2048)
-        self.lin3 = Lin(2048, 2048 * 3)
 
-    def forward(self, data):
-        sa1_out = self.sa1_module(data.x, data.x, data.batch)
+    def Encode(self,data):
+        sa1_out = self.sa1_module(data.pos, data.pos, data.batch)
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
-        
-        x, pos, batch = sa3_out
+        return sa1_out,sa2_out,sa3_out
 
-        x = F.relu(self.lin1(x))
-        x = F.relu(self.lin2(x))
-        x = self.lin3(x)
+
+    def Decode(self,encoded):
+
+    def forward(self, data):
+
+        encoded = self.Encode(data)
+
+
+
         return x
-    
-
-
-
