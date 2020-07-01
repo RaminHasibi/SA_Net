@@ -94,7 +94,7 @@ class FoldingBlock(torch.nn.Module):
         return p1 + p2
 
 
-class Net(torch.nn.Module):
+class SA_Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
 

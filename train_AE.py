@@ -2,7 +2,7 @@ import torch
 from torch_geometric.data import DataLoader
 from chamfer_distance import ChamferDistance
 from Compeletion3D import Completion3D
-
+from Models import SA_Net
 
 
 
@@ -30,12 +30,12 @@ def train():
 if __name__ == '__main__':
 
     path = '../../data/shapenet_2048'
-    dataset = ShapeNet_2048(path, split='trainval', categories='Chair')
+    dataset = Completion3D(path, split='trainval', categories='Chair')
     print(dataset[0])
     train_loader = DataLoader(
         dataset, batch_size=32, shuffle=True)
-    device = torch.device('cuda')
-    model = Net().to(device)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = SA_Net().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     print(model)
     print('Training started:')
