@@ -1,11 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
-import torch_geometric.transforms as T
-from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool
-from chamfer_distance import ChamferDistance
-from Compeletion3D import Completion3D
 import numpy as np
 import itertools
 
@@ -96,7 +92,7 @@ class FoldingBlock(torch.nn.Module):
 
 class SA_Net(torch.nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super(SA_Net, self).__init__()
 
         self.sa1_module = SAModule(0.2, 0.2, MLP([3 + 3, 64, 64, 128]))
         self.sa2_module = SAModule(0.5, 0.4, MLP([128 + 3, 128, 128, 256]))
