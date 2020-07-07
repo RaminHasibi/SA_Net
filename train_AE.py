@@ -18,7 +18,7 @@ def train():
         data = data.to(device)
         optimizer.zero_grad()
         decoded, _ = model(data)
-        loss = criterion(decoded.reshape(-1,2048,3), data.x.reshape(-1,2048,3))
+        loss = criterion(decoded.reshape(-1,2048,3), data.y.reshape(-1,2048,3))
         loss.backward()
         total_loss += loss.item() * data.num_graphs
         optimizer.step()
