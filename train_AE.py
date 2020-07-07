@@ -2,7 +2,7 @@ import torch
 from torch_geometric.data import DataLoader
 from neuralnet_pytorch.metrics import chamfer_loss
 from Compeletion3D import Completion3D
-from Models import SA_Net
+from Models import SaNet
 
 
 
@@ -17,8 +17,8 @@ def train():
             print(step)
         data = data.to(device)
         optimizer.zero_grad()
-        out = model(data)
-        loss = criterion(out.reshape(-1,2048,3), data.x.reshape(-1,2048,3))
+        decoded, _ = model(data)
+        loss = criterion(decoded.reshape(-1,2048,3), data.x.reshape(-1,2048,3))
         loss.backward()
         total_loss += loss.item() * data.num_graphs
         optimizer.step()
@@ -32,9 +32,9 @@ if __name__ == '__main__':
     dataset = Completion3D('../data/Completion3D', split='train', categories='Airplane')
     print(dataset[0])
     train_loader = DataLoader(
-        dataset, batch_size=32, shuffle=True)
+        dataset, batch_size=2, shuffle=True)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = SA_Net().to(device)
+    model = SaNet().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     print(model)
     print('Training started:')
