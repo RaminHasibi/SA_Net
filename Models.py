@@ -3,8 +3,6 @@ import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool
 import numpy as np
-import itertools
-from torch.nn import Conv2d
 
 
 class SAModule(torch.nn.Module):
