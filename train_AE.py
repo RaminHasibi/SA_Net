@@ -1,6 +1,6 @@
 import torch
 from torch_geometric.data import DataLoader
-from neuralnet_pytorch.metrics import chamfer_loss
+from chamfer_distance import ChamferDistance
 from Compeletion3D import Completion3D
 from Models import SaNet
 
@@ -18,8 +18,8 @@ def train():
         data = data.to(device)
         optimizer.zero_grad()
         decoded, _ = model(data)
-        loss = criterion(decoded.reshape(-1,2048,3), data.y.reshape(-1,2048,3))
-        loss.backward()
+        dist1, dist2 = criterion(decoded.reshape(-1,2048,3), data.y.reshape(-1,2048,3))
+        loss = (torch.mean(dist1)) + (torch.mean(dist2)) 
         total_loss += loss.item() * data.num_graphs
         optimizer.step()
     return total_loss / len(dataset)
@@ -38,10 +38,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     print(model)
     print('Training started:')
-    criterion = chamfer_loss
+    criterion = ChamferDistance()
     for epoch in range(1, 401):
         loss = train()
         print('Epoch {:03d}, Loss: {:.4f}'.format(
             epoch, loss))
         if epoch % 10 ==0:
-            torch.save(model.state_dict(),'./pointAECh'+'{}'.format(epoch)+'.pt')
+            torch.save(model.state_dict(),'./trained/SA_net_Ch'+'{}'.format(epoch)+'.pt')
