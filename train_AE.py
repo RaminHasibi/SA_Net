@@ -13,13 +13,12 @@ def train():
     step = 0
     for data in train_loader:
         step += 1
-        if step % 50 == 0:
-            print(step)
         data = data.to(device)
         optimizer.zero_grad()
         decoded, _ = model(data)
         dist1, dist2 = criterion(decoded.reshape(-1,2048,3), data.y.reshape(-1,2048,3))
         loss = (torch.mean(dist1)) + (torch.mean(dist2)) 
+        loss.backward()
         total_loss += loss.item() * data.num_graphs
         optimizer.step()
     return total_loss / len(dataset)
@@ -28,11 +27,10 @@ def train():
 
 if __name__ == '__main__':
 
-    path = '../../data/shapenet_2048'
     dataset = Completion3D('../data/Completion3D', split='train', categories='Airplane')
     print(dataset[0])
     train_loader = DataLoader(
-        dataset, batch_size=2, shuffle=True)
+        dataset, batch_size=32, shuffle=True)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = SaNet().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
